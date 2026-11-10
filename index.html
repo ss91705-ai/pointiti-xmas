@@ -20,6 +20,10 @@ const CONFIG = {
   DEADLINE: '2026-11-13T23:59:59+08:00',
   DEADLINE_TEXT: '11/13（五）23:59 截止',
 
+  // 開放下單時間（之前可以試玩，但不能送出訂單）
+  OPEN: '2026-11-11T00:00:00+08:00',
+  OPEN_TEXT: '11/11（三）00:00 開放下單',
+
   // 運送說明
   SHIPPING_TEXT: '僅限宅配',
   SHIPPING_FEE: 100,
@@ -33,8 +37,11 @@ const CONFIG = {
 
   IG: 'smooch_home',
 
-  // 三個團購的入口頁網址（填了才會出現「看另外兩個團購」按鈕）
-  HUB_URL: '',
+  // 另外兩個團購頁（顯示在「三選二，抽好禮」區塊）
+  OTHER_PAGES: [
+    ['航空收納箱組合', 'https://ss91705-ai.github.io/airline-box/'],
+    ['磁吸板雙11組合', 'https://ss91705-ai.github.io/magnet-board/'],
+  ],
 
   // 禮盒內容與價格
   SETS: {
@@ -254,8 +261,10 @@ body[data-step="3"] .lottery{display:none}
 .lottery h3{font-family:var(--body);font-weight:700;font-size:20px;margin:0 0 10px;letter-spacing:.04em}
 .lottery h3 span{color:var(--accent);margin-left:4px}
 .lottery p{margin:0;font-size:14px;line-height:1.8}
-.lottery .hub{display:inline-block;margin-top:14px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;font-size:14px;border:2px solid var(--ink);border-radius:10px;padding:9px 18px;box-shadow:4px 4px 0 var(--ink)}
+.lottery .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.lottery .hub{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;font-size:14px;border:2px solid var(--ink);border-radius:10px;padding:9px 18px;box-shadow:4px 4px 0 var(--ink)}
 .lottery .hub[hidden]{display:none}
+.meta .soon{background:var(--ink);color:#fff;border-color:var(--ink)}
 footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.2em;opacity:.55;padding:26px 0 0}
 
 /* ---------- desktop ---------- */
@@ -316,7 +325,7 @@ footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.
         <b>Silver House</b><span class="zh">銀色小屋</span><em class="zh">選這間 →</em>
       </button>
     </div>
-    <div class="meta zh"><span id="metaDeadline"></span><span id="metaShip"></span></div>
+    <div class="meta zh"><span id="metaOpen" class="soon" hidden></span><span id="metaDeadline"></span><span id="metaShip"></span></div>
   </section>
 
   <!-- 2 選禮盒 -->
@@ -403,7 +412,7 @@ footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.
   <aside class="lottery">
     <h3>三選二，抽好禮<span>✦</span></h3>
     <p>雙 11 三個團購頁，任選兩個下單就能參加抽獎。獎項近期公布。（資格以實際訂單的 IG 帳號＋手機為準）</p>
-    <a class="hub" id="hubBtn" hidden>看另外兩個團購</a>
+    <div class="links" id="otherPages"></div>
   </aside>
 
   <footer>POINTITI × SMOOCH HOME · 2026</footer>
@@ -462,6 +471,7 @@ $('#back').onclick = () => go(state.step - 1);
 
 /* ---------- 1 選小屋 ---------- */
 $('#metaDeadline').textContent = CONFIG.DEADLINE_TEXT;
+if (notOpen()){ $('#metaOpen').textContent = CONFIG.OPEN_TEXT + '・現在可以先試玩'; $('#metaOpen').hidden = false; }
 $('#metaShip').textContent = CONFIG.SHIPPING_TEXT;
 document.querySelectorAll('.house-pick').forEach(b => b.onclick = () => {
   state.house = b.dataset.house;
@@ -583,15 +593,25 @@ function enterOrder(){
     `<div class="row total"><span>Total 合計</span><span>${money(s.price + CONFIG.SHIPPING_FEE)}</span></div>`;
   $('#formNote').textContent = `${CONFIG.SHIPPING_TEXT}・${CONFIG.DEADLINE_TEXT}。送出後會顯示付款資訊，付款完成請私訊 IG @${CONFIG.IG}。`;
   if (closed()) showMsg('本次團購已截止，感謝支持。', true);
+  else if (notOpen()) lockUntilOpen();
   go(4);
 }
 const closed = () => Date.now() > new Date(CONFIG.DEADLINE).getTime();
+function notOpen(){ return Date.now() < new Date(CONFIG.OPEN).getTime(); }
+let openTimer;
+function lockUntilOpen(){
+  showMsg(`現在是試玩時間，${CONFIG.OPEN_TEXT}。可以先把小屋和顏色挑好，到時候再回來送出。`);
+  const btn = $('#submit'); btn.disabled = true; btn.firstChild.textContent = 'Opens 11.11 ';
+  clearInterval(openTimer);
+  openTimer = setInterval(() => { if (!notOpen()){ clearInterval(openTimer); btn.disabled = false; btn.firstChild.textContent = 'Send my order '; $('#formMsg').hidden = true; $('#metaOpen').hidden = true; } }, 15000);
+}
 function showMsg(t, lock){ const m = $('#formMsg'); m.textContent = t; m.hidden = false; if (lock) $('#submit').disabled = true; }
 
 $('#form').addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.target, d = Object.fromEntries(new FormData(f));
   if (closed()) return showMsg('本次團購已截止，感謝支持。', true);
+  if (notOpen()) return lockUntilOpen();
   if (!d.name.trim() || !d.address.trim() || !d.ig.trim()) return showMsg('請填寫姓名、宅配地址與 IG 帳號。');
   if (!/^09\d{8}$/.test(d.phone.replace(/[\s-]/g,''))) return showMsg('手機號碼格式請填 09 開頭共 10 碼。');
   if (d.last5.trim() && !/^\d{5}$/.test(d.last5.trim())) return showMsg('匯款帳號後五碼請填 5 個數字，或先留空。');
@@ -630,7 +650,7 @@ $('#form').addEventListener('submit', async e => {
 });
 
 /* ---------- 入口頁按鈕 ---------- */
-if (CONFIG.HUB_URL){ $('#hubBtn').href = CONFIG.HUB_URL; $('#hubBtn').hidden = false; }
+$('#otherPages').innerHTML = CONFIG.OTHER_PAGES.map(([name,url]) => `<a class="hub" href="${url}" target="_blank" rel="noopener">${name} ↗</a>`).join('');
 
 /* ---------- 商品資訊卡 ---------- */
 function openInfo(cat, id){
