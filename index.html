@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pointiti Holiday House｜雙11 聖誕小屋禮盒團購</title>
+<meta name="description" content="pointiti 聖誕小屋禮盒：選一間小屋，裝進你的顏色。雙11 團購限定。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght,SOFT@9..144,400..900,100&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+/* =====================================================================
+   設定區：要改文字、價格、付款資訊，只要改這一段
+   ===================================================================== */
+const CONFIG = {
+  // Google Apps Script 部署後的網址（留空 = 預覽模式，訂單不會送出）
+  SHEET_URL: 'https://script.google.com/macros/s/AKfycbxxyCTuc9LkwDqUVnnfSOPcWOCA-BWVLOn4AYAdR8GxjVtW_cfG3NYBufKZUojsGWk1pA/exec',
+
+  // 截止時間（過了之後自動關閉下單）
+  DEADLINE: '2026-11-13T23:59:59+08:00',
+  DEADLINE_TEXT: '11/13（五）23:59 截止',
+
+  // 運送說明
+  SHIPPING_TEXT: '僅限宅配',
+
+  // 付款資訊：送出訂單後顯示，請換成和磁吸板團購相同的內容
+  PAYMENT_LINES: [
+    '【請替換】銀行名稱（代碼）',
+    '【請替換】帳號',
+    '【請替換】戶名',
+  ],
+
+  IG: 'smooch_home',
+
+  // 禮盒內容與價格
+  SETS: {
+    storage: { en: 'Storage Set', zh: '收納組', price: 2799, original: 3230,
+               slots: ['hook', 'hook', 'magnet', 'box'] },
+    mirror:  { en: 'Mirror Set',  zh: '鏡子組', price: 3299, original: 3790,
+               slots: ['hook', 'hook', 'magnet', 'mirror'] },
+  },
+};
+</script>
+<style>
+:root{
+  --bg:#FFF4E6; --bg2:#FBD5E2; --ink:#5B1730; --accent:#D6336C; --soft:#F7BBD0;
+  --card:#FFFDF8; --inner:#EFE3D3; --reg:#C2255C; --reg-dark:#8E1741; --line:rgba(91,23,48,.16);
+  --display:'Fraunces','Noto Sans TC',serif; --body:'Noto Sans TC',system-ui,sans-serif; --mono:'DM Mono',ui-monospace,monospace;
+}
+body[data-house="silver"]{
+  --bg:#F2F3F4; --bg2:#D8E5F1; --ink:#3B3531; --accent:#7D7067; --soft:#C7D8E8;
+  --card:#FFFFFF; --inner:#E6E0D9; --reg:#8C7F76; --reg-dark:#5F554E; --line:rgba(59,53,49,.16);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;overflow-x:hidden}
+body{margin:0;font-family:var(--body);color:var(--ink);background:var(--bg);min-height:100vh;
+  transition:background .6s,color .6s;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+img{display:block;max-width:100%}
+.zh{font-family:var(--body);font-weight:500;letter-spacing:.04em}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:12px 18px;
+  background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(8px)}
+.brand{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.01em;line-height:1}
+.brand small{display:block;font-family:var(--mono);font-weight:400;font-size:9px;letter-spacing:.32em;margin-top:4px;opacity:.7}
+.steps{margin-left:auto;display:flex;gap:6px;align-items:center}
+.steps i{width:8px;height:8px;border-radius:50%;background:var(--line);transition:.3s}
+.steps i.on{background:var(--accent);width:22px;border-radius:8px}
+.back{font-size:13px;padding:8px 12px;border-radius:99px;border:1.5px solid var(--line);white-space:nowrap}
+.back[hidden]{display:none}
+
+/* ---------- screens ---------- */
+main{max-width:1120px;margin:0 auto;padding:8px 18px 140px}
+.screen{display:none;animation:rise .55s cubic-bezier(.2,.8,.2,1)}
+.screen.active{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+h1,h2{font-family:var(--display);font-weight:800;font-variation-settings:'SOFT' 100;letter-spacing:-.01em;line-height:1.02;margin:0}
+h1{font-size:clamp(38px,9vw,76px)}
+h2{font-size:clamp(30px,6.5vw,52px)}
+.lede{margin:10px 0 0;font-size:14px;line-height:1.7;opacity:.85}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;opacity:.7;margin-bottom:10px}
+.head{text-align:center;padding:18px 0 6px}
+
+/* ---------- 3D house ---------- */
+.house-box{--k:.3;width:calc(600px*var(--k));height:calc(940px*var(--k));position:relative;perspective:calc(2200px*var(--k));margin:0 auto}
+.house-scale{position:absolute;left:50%;top:calc(175px*var(--k));width:420px;height:626px;margin-left:-210px;
+  transform:scale3d(var(--k),var(--k),var(--k));transform-origin:50% 0;transform-style:preserve-3d}
+.house3d{--rx:-9deg;--ry:-32deg;--roof:44.46deg;position:absolute;inset:0;transform-style:preserve-3d;
+  transform:rotateX(var(--rx)) rotateY(var(--ry));transition:transform 1s cubic-bezier(.3,.9,.3,1)}
+.house3d>*{position:absolute;backface-visibility:hidden;background-size:100% 100%}
+.f-front,.f-back{left:0;top:0;width:420px;height:626px}
+.f-front{transform:translateZ(192.5px)}
+.f-back{transform:rotateY(180deg) translateZ(192.5px)}
+.f-right,.f-left{left:17.5px;top:214px;width:385px;height:412px}
+.f-right{transform:rotateY(90deg) translateZ(210px)}
+.f-left{transform:rotateY(-90deg) translateZ(210px)}
+.in{background:var(--inner);filter:brightness(.93)}
+.in.f-front,.in.f-back{clip-path:polygon(0 34.2%,50% 0,100% 34.2%,100% 100%,0 100%)}
+.in.f-front{transform:translateZ(192px) rotateY(180deg);filter:brightness(.88)}
+.in.f-back{transform:rotateY(180deg) translateZ(192px) rotateY(180deg)}
+.in.f-right{transform:rotateY(90deg) translateZ(209.5px) rotateY(180deg);filter:brightness(.84)}
+.in.f-left{transform:rotateY(-90deg) translateZ(209.5px) rotateY(180deg);filter:brightness(.97)}
+.roof{left:17.5px;top:-86px;width:385px;height:300px;transform-origin:50% 100%;transition:transform 1s cubic-bezier(.3,1.2,.4,1)}
+.roof.r{transform:rotateY(90deg) translateZ(210px) rotateX(var(--roof))}
+.roof.l{transform:rotateY(-90deg) translateZ(210px) rotateX(var(--roof))}
+.roof.in.r{transform:rotateY(90deg) translateZ(210px) rotateX(var(--roof)) rotateY(180deg)}
+.roof.in.l{transform:rotateY(-90deg) translateZ(210px) rotateX(var(--roof)) rotateY(180deg)}
+.handle{left:113px;top:-88px;width:193px;height:93px;backface-visibility:visible;transform:rotateY(90deg);transition:opacity .35s}
+.floor{left:0;top:433.5px;width:420px;height:385px;background:var(--inner);backface-visibility:visible;transform:rotateX(90deg);filter:brightness(.8)}
+.shadow{left:-60px;top:398px;width:540px;height:460px;backface-visibility:visible;transform:rotateX(90deg) translateZ(-3px);
+  background:radial-gradient(closest-side,rgba(40,20,30,.28),rgba(40,20,30,0) 72%)}
+.house3d.open{--rx:-34deg;--ry:-26deg;--roof:-58deg}
+.house3d.open .handle{opacity:0}
+.house3d.sway{animation:sway 5s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotateX(var(--rx)) rotateY(calc(var(--ry) - 7deg))}50%{transform:rotateX(var(--rx)) rotateY(calc(var(--ry) + 9deg))}}
+.house3d.spin{animation:spin 1.5s cubic-bezier(.4,0,.2,1)}
+@keyframes spin{from{transform:rotateX(-9deg) rotateY(-32deg)}to{transform:rotateX(-9deg) rotateY(-392deg)}}
+.house3d.bump{animation:bump .35s}
+@keyframes bump{40%{transform:rotateX(var(--rx)) rotateY(var(--ry)) translateY(14px) scale(1.03,.97)}}
+
+/* ---------- step 1 ---------- */
+body[data-step="1"]{background:linear-gradient(90deg,#FFEFF4 0 50%,#EAF1F7 50% 100%);--ink:#4A2A33}
+body[data-step="1"] header{background:transparent;backdrop-filter:none}
+.houses{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:8px}
+.house-pick{display:flex;flex-direction:column;align-items:center;padding:6px 0 22px;border-radius:28px;transition:transform .3s}
+.house-pick:hover{transform:translateY(-6px)}
+.house-pick .house-box{--k:.31}
+.house-pick b{font-family:var(--display);font-weight:800;font-size:22px;margin-top:2px}
+.house-pick span{font-size:12px;opacity:.8;margin-top:4px}
+.house-pick em{font-style:normal;margin-top:12px;font-size:13px;padding:9px 18px;border-radius:99px;color:#fff}
+.house-pick[data-house="pink"] em{background:#D6336C}
+.house-pick[data-house="silver"] em{background:#7D7067}
+.meta{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px;font-size:12px}
+.meta span{padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.7);border:1px solid rgba(74,42,51,.12)}
+
+/* ---------- step 2 ---------- */
+.sets{display:grid;gap:16px;margin-top:22px}
+.set{text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:26px;padding:20px;transition:.25s;position:relative;overflow:hidden}
+.set:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 14px 30px -18px var(--ink)}
+.set h3{font-family:var(--display);font-weight:800;font-size:30px;margin:0;line-height:1}
+.set h3 small{font-family:var(--body);font-size:13px;font-weight:500;margin-left:8px;opacity:.75}
+.set .thumbs{display:flex;align-items:flex-end;gap:10px;height:104px;margin:16px 0 14px}
+.set .thumbs img{height:100%;width:auto;max-width:27%;object-fit:contain;filter:drop-shadow(0 6px 6px rgba(0,0,0,.14))}
+.set ul{list-style:none;margin:0;padding:0;font-size:13px;line-height:1.9}
+.set li{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line)}
+.set li span:last-child{font-family:var(--mono)}
+.set .price{display:flex;align-items:baseline;gap:10px;margin-top:14px}
+.set .price b{font-family:var(--display);font-weight:800;font-size:32px}
+.set .price s{font-size:13px;opacity:.6}
+.set .tag{position:absolute;right:16px;top:16px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;background:var(--accent);color:#fff;padding:5px 10px;border-radius:99px}
+
+/* ---------- step 3 ---------- */
+.fill{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-top:6px}
+.stage{display:flex;flex-direction:column;align-items:center;overflow-x:clip}
+.stage .house-box{--k:.33}
+.slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%;max-width:440px;margin-top:4px}
+.slot{aspect-ratio:1/1.12;border-radius:16px;border:1.5px dashed var(--line);background:color-mix(in srgb,var(--card) 60%,transparent);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px;font-size:10px;line-height:1.25;text-align:center;transition:.2s;position:relative}
+.slot.active{border:2px solid var(--accent);background:var(--card);box-shadow:0 8px 18px -12px var(--ink)}
+.slot.filled{border-style:solid}
+.slot img{height:58%;width:auto;object-fit:contain;filter:drop-shadow(0 4px 4px rgba(0,0,0,.15))}
+.slot .n{font-family:var(--mono);font-size:9px;letter-spacing:.1em;opacity:.6}
+.slot .plus{font-family:var(--display);font-size:26px;line-height:1;opacity:.45}
+.tray{background:var(--bg2);border-radius:26px;padding:16px;transition:background .6s}
+.tray h3{font-family:var(--display);font-weight:800;font-size:22px;margin:0 0 2px}
+.tray p{margin:0 0 12px;font-size:12px;opacity:.8}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{background:var(--card);border-radius:16px;padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  border:2px solid transparent;transition:transform .2s,border-color .2s;font-size:11px;line-height:1.3}
+.tile:hover{transform:translateY(-3px) rotate(-1.5deg)}
+.tile.sel{border-color:var(--accent)}
+.tile img{height:78px;width:auto;object-fit:contain;filter:drop-shadow(0 5px 5px rgba(0,0,0,.14))}
+.tile b{font-family:var(--display);font-weight:700;font-size:14px;display:block}
+.fly{position:fixed;z-index:60;pointer-events:none;object-fit:contain;filter:drop-shadow(0 12px 10px rgba(0,0,0,.22))}
+
+/* ---------- register ---------- */
+.register{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--reg);color:#fff;padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  display:none;gap:10px;align-items:stretch;border-radius:22px 22px 0 0;box-shadow:0 -10px 30px -16px rgba(0,0,0,.5)}
+body[data-step="3"] .register{display:flex}
+.screen-lcd{flex:1;background:#1E1418;border-radius:12px;padding:8px 12px;font-family:var(--mono);box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
+.screen-lcd .l1{font-size:10px;letter-spacing:.14em;opacity:.75;display:flex;justify-content:space-between}
+.screen-lcd .l2{font-size:22px;font-weight:500;color:#FFE9B8;margin-top:2px}
+.screen-lcd .l2 s{font-size:11px;opacity:.55;margin-left:8px;color:#fff}
+.keys{display:none}
+.boxit{background:#FFE9B8;color:#3a1a20;border-radius:12px;padding:0 16px;font-family:var(--display);font-weight:800;font-size:15px;line-height:1.15;
+  box-shadow:0 4px 0 var(--reg-dark);transition:.15s;min-width:104px}
+.boxit small{display:block;font-family:var(--body);font-weight:500;font-size:10px;letter-spacing:.1em}
+.boxit:disabled{opacity:.45;cursor:not-allowed;box-shadow:0 2px 0 var(--reg-dark)}
+.boxit:not(:disabled):active{transform:translateY(3px);box-shadow:0 1px 0 var(--reg-dark)}
+.drawer,.crest{display:none}
+
+/* ---------- step 4 ---------- */
+.order{display:grid;gap:18px;margin-top:10px}
+.packed{display:flex;flex-direction:column;align-items:center}
+.packed .house-box{--k:.34}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:26px;padding:20px}
+.card h3{font-family:var(--display);font-weight:800;font-size:22px;margin:0 0 12px}
+.receipt{font-family:var(--mono);font-size:12px}
+.receipt .row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);align-items:center}
+.receipt .row img{height:30px;width:30px;object-fit:contain;margin-right:8px}
+.receipt .row span:first-child{display:flex;align-items:center;font-family:var(--body)}
+.receipt .total{font-size:18px;font-weight:500;border-bottom:0;padding-top:12px}
+form{display:grid;gap:12px}
+label{display:grid;gap:5px;font-size:12px;font-weight:500}
+label em{font-style:normal;font-family:var(--mono);font-size:10px;letter-spacing:.14em;opacity:.65;text-transform:uppercase}
+input[type=text],input[type=tel],textarea{font:inherit;font-size:16px;color:inherit;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:#fff;width:100%}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.6}
+.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex:none}
+.submit{background:var(--accent);color:#fff;border-radius:16px;padding:16px;font-family:var(--display);font-weight:800;font-size:18px;box-shadow:0 5px 0 var(--reg-dark);transition:.15s}
+.submit:active{transform:translateY(3px);box-shadow:0 2px 0 var(--reg-dark)}
+.submit:disabled{opacity:.6}
+.note{font-size:12px;line-height:1.8;opacity:.85;margin:0}
+.msg{font-size:13px;line-height:1.7;padding:12px 14px;border-radius:14px;background:var(--bg2)}
+.msg[hidden]{display:none}
+.done h2{margin-bottom:8px}
+.pay{font-family:var(--mono);font-size:14px;line-height:2;background:var(--bg2);border-radius:16px;padding:14px 16px;margin:14px 0}
+.ig{display:inline-block;background:var(--ink);color:var(--bg);text-decoration:none;border-radius:99px;padding:12px 20px;font-weight:700;font-size:14px}
+footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.2em;opacity:.55;padding:26px 0 0}
+
+/* ---------- desktop ---------- */
+@media (min-width:860px){
+  main{padding-bottom:60px}
+  .house-pick .house-box{--k:.43}
+  .house-pick b{font-size:30px}
+  .sets{grid-template-columns:1fr 1fr;gap:22px;max-width:860px;margin-left:auto;margin-right:auto}
+  .fill{grid-template-columns:minmax(0,1fr) 400px minmax(240px,300px);align-items:start;gap:22px}
+  .tray{order:1}.stage{order:2}.register{order:3}
+  .stage .house-box{--k:.5}
+  .tile img{height:96px}
+  .register{position:sticky;top:90px;display:none;flex-direction:column;border-radius:26px;padding:22px 18px 16px;box-shadow:0 18px 30px -20px var(--ink),inset 0 -8px 0 var(--reg-dark)}
+  body[data-step="3"] .register{display:flex}
+  .crest{display:block;height:14px;width:46%;margin:-34px auto 6px;background:var(--reg);border-radius:14px 14px 0 0;box-shadow:inset 0 3px 0 rgba(255,255,255,.25)}
+  .screen-lcd{padding:14px 16px}
+  .screen-lcd .l2{font-size:30px}
+  .keys{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:4px 0}
+  .keys i{height:22px;border-radius:7px;background:#FFE9B8;box-shadow:0 3px 0 var(--reg-dark);opacity:.92}
+  .boxit{padding:14px;font-size:20px}
+  .drawer{display:block;height:34px;border-radius:10px;background:rgba(255,255,255,.2);box-shadow:inset 0 2px 5px rgba(0,0,0,.3);position:relative}
+  .drawer::after{content:'';position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px;border-radius:50%;background:#FFE9B8}
+  .order{grid-template-columns:1fr 1.2fr;align-items:start}
+  .packed{position:sticky;top:90px}
+  .packed .house-box{--k:.46}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body data-step="1">
+
+<header>
+  <div class="brand">pointiti<small>LIVE COLOR FULLY</small></div>
+  <div class="steps" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+  <button class="back" id="back" hidden>← Back <span class="zh">上一步</span></button>
+</header>
+
+<main>
+
+  <!-- 1 選小屋 -->
+  <section class="screen active" data-screen="1">
+    <div class="head">
+      <div class="eyebrow">pointiti Holiday House · 11.11</div>
+      <h1>Pick your<br>little house.</h1>
+      <p class="lede zh">選一間聖誕小屋，把喜歡的顏色裝進去。</p>
+    </div>
+    <div class="houses">
+      <button class="house-pick" data-house="pink">
+        <div class="house-box" data-build="pink"></div>
+        <b>Pink House</b><span class="zh">粉紅小屋</span><em class="zh">選這間 →</em>
+      </button>
+      <button class="house-pick" data-house="silver">
+        <div class="house-box" data-build="silver"></div>
+        <b>Silver House</b><span class="zh">銀色小屋</span><em class="zh">選這間 →</em>
+      </button>
+    </div>
+    <div class="meta zh"><span id="metaDeadline"></span><span id="metaShip"></span></div>
+  </section>
+
+  <!-- 2 選禮盒 -->
+  <section class="screen" data-screen="2">
+    <div class="head">
+      <div class="eyebrow">Step 2</div>
+      <h2>Choose your set.</h2>
+      <p class="lede zh">兩種禮盒，內容物的顏色都由你決定。</p>
+    </div>
+    <div class="sets" id="sets"></div>
+  </section>
+
+  <!-- 3 挑款式 -->
+  <section class="screen" data-screen="3">
+    <div class="head">
+      <div class="eyebrow">Step 3</div>
+      <h2>Fill it with color.</h2>
+      <p class="lede zh">點一下格子，再從下方挑顏色，四格都選好就能裝盒。</p>
+    </div>
+    <div class="fill">
+      <div class="stage">
+        <div class="house-box" id="stageHouse"></div>
+        <div class="slots" id="slots"></div>
+      </div>
+      <div class="tray">
+        <h3 id="trayTitle"></h3>
+        <p class="zh" id="traySub"></p>
+        <div class="tiles" id="tiles"></div>
+      </div>
+      <div class="register">
+        <div class="crest"></div>
+        <div class="screen-lcd">
+          <div class="l1"><span id="lcdSet"></span><span id="lcdCount"></span></div>
+          <div class="l2"><span id="lcdPrice"></span><s id="lcdOrig"></s></div>
+        </div>
+        <div class="keys"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <button class="boxit" id="boxit" disabled>BOX IT UP<small>裝盒</small></button>
+        <div class="drawer"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 下單 -->
+  <section class="screen" data-screen="4">
+    <div class="head">
+      <div class="eyebrow">Step 4</div>
+      <h2 id="orderTitle">Almost home.</h2>
+      <p class="lede zh" id="orderLede">小屋裝好了，填寫資料完成訂購。</p>
+    </div>
+    <div class="order">
+      <div class="packed">
+        <div class="house-box" id="packedHouse"></div>
+        <div class="card" style="width:100%">
+          <h3>Your house <span class="zh" style="font-size:13px">訂單內容</span></h3>
+          <div class="receipt" id="receipt"></div>
+        </div>
+      </div>
+      <div class="card" id="formCard">
+        <h3>Delivery <span class="zh" style="font-size:13px">收件資料</span></h3>
+        <form id="form" novalidate>
+          <label><span>姓名 <em>Name</em></span><input type="text" name="name" autocomplete="name" required></label>
+          <label><span>手機 <em>Phone</em></span><input type="tel" name="phone" autocomplete="tel" inputmode="numeric" placeholder="09xxxxxxxx" required></label>
+          <label><span>宅配地址 <em>Address</em></span><input type="text" name="address" autocomplete="street-address" required></label>
+          <label><span>IG 帳號 <em>Instagram</em></span><input type="text" name="ig" placeholder="@" autocapitalize="off" required></label>
+          <label><span>備註 <em>Note</em></span><textarea name="note" rows="2"></textarea></label>
+          <label class="check"><input type="checkbox" name="agree" required><span>我已確認小屋與內容物顏色無誤，團購商品下單後不棄單。</span></label>
+          <div class="msg" id="formMsg" hidden></div>
+          <button class="submit" id="submit">Send my order <span class="zh" style="font-size:13px">送出訂單</span></button>
+          <p class="note zh" id="formNote"></p>
+        </form>
+      </div>
+      <div class="card done" id="doneCard" hidden>
+        <h2>Thank you!</h2>
+        <p class="note zh" id="doneText"></p>
+        <div class="pay" id="payInfo"></div>
+        <a class="ig" id="igLink" target="_blank" rel="noopener"></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>POINTITI × SMOOCH HOME · 2026</footer>
+</main>
+
+<script>
+/* ---------- 商品資料 ---------- */
+const CATS = {
+  hook:   { en:'Hook', zh:'磁吸掛鉤', items:[['mint','Mint','薄荷'],['green','Green','綠'],['brown','Brown','棕'],['yellow','Yellow','黃'],['skyblue','Sky Blue','天藍'],['butter','Butter','奶油']] },
+  magnet: { en:'Color Drop Magnet', zh:'磁鐵', items:[['latte','Latte','拿鐵'],['mellow','Mellow','柔彩'],['original','Original','經典'],['spring','Spring','春日']] },
+  box:    { en:'Storage Box', zh:'磁吸盒', items:[['mint','Mint','薄荷'],['brown','Brown','棕'],['butter','Butter','奶油'],['skyblue','Sky Blue','天藍']] },
+  mirror: { en:'Mirror', zh:'磁吸鏡', items:[['red','Red','紅'],['butter','Butter','奶油'],['mint','Mint','薄荷']] },
+};
+const HOUSES = { pink:{en:'Pink House',zh:'粉紅小屋'}, silver:{en:'Silver House',zh:'銀色小屋'} };
+const img = (cat,id) => `assets/${cat}-${id}.webp`;
+const $ = s => document.querySelector(s);
+const money = n => 'NT$' + n.toLocaleString('en-US');
+const state = { step:1, house:null, set:null, picks:[], active:0 };
+
+/* ---------- 3D 小屋 ---------- */
+function buildHouse(el, color, cls=''){
+  const a = p => `style="background-image:url(assets/house-${color}-${p}.webp)"`;
+  el.innerHTML = `<div class="house-scale"><div class="house3d ${cls}">
+    <div class="shadow"></div><div class="floor"></div>
+    <div class="f-back" ${a('front')}></div><div class="in f-back"></div>
+    <div class="f-left" ${a('side')}></div><div class="in f-left"></div>
+    <div class="f-right" ${a('side')}></div><div class="in f-right"></div>
+    <div class="f-front" ${a('front')}></div><div class="in f-front"></div>
+    <div class="roof l" ${a('roof')}></div><div class="roof in l"></div>
+    <div class="roof r" ${a('roof')}></div><div class="roof in r"></div>
+    <div class="handle" ${a('handle')}></div>
+  </div></div>`;
+  return el.querySelector('.house3d');
+}
+document.querySelectorAll('[data-build]').forEach(el => buildHouse(el, el.dataset.build, 'sway'));
+
+/* ---------- 換頁 ---------- */
+function go(step){
+  state.step = step;
+  document.body.dataset.step = step;
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', +s.dataset.screen === step));
+  document.querySelectorAll('.steps i').forEach((d,i) => d.classList.toggle('on', i === step-1));
+  $('#back').hidden = step === 1 || !$('#doneCard').hidden;
+  window.scrollTo({top:0, behavior:'instant' in window ? 'instant' : 'auto'});
+}
+$('#back').onclick = () => go(state.step - 1);
+
+/* ---------- 1 選小屋 ---------- */
+$('#metaDeadline').textContent = CONFIG.DEADLINE_TEXT;
+$('#metaShip').textContent = CONFIG.SHIPPING_TEXT;
+document.querySelectorAll('.house-pick').forEach(b => b.onclick = () => {
+  state.house = b.dataset.house;
+  document.body.dataset.house = state.house;
+  renderSets(); go(2);
+});
+
+/* ---------- 2 選禮盒 ---------- */
+function renderSets(){
+  const sample = { hook:['mint','yellow'], magnet:['mellow'], box:['skyblue'], mirror:['red'] };
+  $('#sets').innerHTML = Object.entries(CONFIG.SETS).map(([key,s]) => {
+    const counts = {}; s.slots.forEach(c => counts[c] = (counts[c]||0)+1);
+    const used = {};
+    const thumbs = s.slots.map(c => { const i = used[c] = (used[c]||0); used[c]++; return `<img src="${img(c, sample[c][i] || sample[c][0])}" alt="">`; }).join('');
+    const list = Object.entries(counts).map(([c,n]) => `<li><span>${CATS[c].zh} <span style="opacity:.6;font-size:11px">${CATS[c].en}</span></span><span>×${n}</span></li>`).join('');
+    return `<button class="set" data-set="${key}">
+      <span class="tag">11.11</span>
+      <h3>${s.en}<small>${s.zh}</small></h3>
+      <div class="thumbs">${thumbs}</div>
+      <ul>${list}</ul>
+      <div class="price"><b>${money(s.price)}</b><s>原價 ${money(s.original)}</s></div>
+    </button>`;
+  }).join('');
+  document.querySelectorAll('.set').forEach(b => b.onclick = () => {
+    if (state.set !== b.dataset.set){ state.set = b.dataset.set; state.picks = CONFIG.SETS[state.set].slots.map(() => null); state.active = 0; }
+    enterFill();
+  });
+}
+
+/* ---------- 3 挑款式 ---------- */
+let stage3d;
+function enterFill(){
+  stage3d = buildHouse($('#stageHouse'), state.house);
+  go(3); renderFill();
+  setTimeout(() => stage3d.classList.add('open'), 250);
+}
+function slotLabel(i){
+  const slots = CONFIG.SETS[state.set].slots, c = slots[i];
+  const total = slots.filter(x => x === c).length;
+  const nth = slots.slice(0, i+1).filter(x => x === c).length;
+  return { cat:c, en: CATS[c].en + (total>1 ? ' '+nth : ''), zh: CATS[c].zh + (total>1 ? ' '+nth : '') };
+}
+function renderFill(){
+  const s = CONFIG.SETS[state.set];
+  $('#slots').innerHTML = s.slots.map((c,i) => {
+    const L = slotLabel(i), p = state.picks[i];
+    const it = p && CATS[c].items.find(x => x[0] === p);
+    return `<button class="slot ${i===state.active?'active':''} ${p?'filled':''}" data-i="${i}" aria-label="${L.zh}">
+      <span class="n">0${i+1}</span>
+      ${p ? `<img src="${img(c,p)}" alt=""><span>${L.zh}<br><b>${it[2]}</b></span>` : `<span class="plus">+</span><span>${L.zh}</span>`}
+    </button>`;
+  }).join('');
+  document.querySelectorAll('.slot').forEach(b => b.onclick = () => { state.active = +b.dataset.i; renderFill(); });
+
+  const L = slotLabel(state.active), cat = CATS[L.cat];
+  $('#trayTitle').textContent = `Pick your ${L.en.toLowerCase()}.`;
+  $('#traySub').textContent = `選擇「${L.zh}」的顏色`;
+  $('#tiles').innerHTML = cat.items.map(([id,en,zh]) => `<button class="tile ${state.picks[state.active]===id?'sel':''}" data-id="${id}">
+      <img src="${img(L.cat,id)}" alt="${zh}${cat.zh}"><span><b>${en}</b>${zh}</span></button>`).join('');
+  document.querySelectorAll('.tile').forEach(b => b.onclick = () => pick(b));
+
+  const n = state.picks.filter(Boolean).length;
+  $('#lcdSet').textContent = s.en.toUpperCase();
+  $('#lcdCount').textContent = `${n} / ${s.slots.length}`;
+  $('#lcdPrice').textContent = money(s.price);
+  $('#lcdOrig').textContent = money(s.original);
+  $('#boxit').disabled = n < s.slots.length;
+}
+function pick(tile){
+  const i = state.active, cat = CONFIG.SETS[state.set].slots[i], id = tile.dataset.id;
+  fly(tile.querySelector('img'), $('#stageHouse'));
+  state.picks[i] = id;
+  const next = state.picks.findIndex(p => !p);
+  if (next !== -1) state.active = next;
+  setTimeout(renderFill, 180);
+}
+function fly(src, target){
+  const a = src.getBoundingClientRect(), b = target.getBoundingClientRect();
+  const el = src.cloneNode(); el.className = 'fly';
+  Object.assign(el.style, {left:a.left+'px', top:a.top+'px', width:a.width+'px', height:a.height+'px'});
+  document.body.appendChild(el);
+  const dx = b.left + b.width/2 - (a.left + a.width/2), dy = b.top + b.height*.42 - (a.top + a.height/2);
+  el.animate([
+    {transform:'translate(0,0) scale(1) rotate(0)', opacity:1},
+    {transform:`translate(${dx*.55}px,${dy - 110}px) scale(1.15) rotate(-14deg)`, opacity:1, offset:.55},
+    {transform:`translate(${dx}px,${dy}px) scale(.3) rotate(8deg)`, opacity:.2}
+  ], {duration:720, easing:'cubic-bezier(.4,0,.3,1)'}).onfinish = () => {
+    el.remove();
+    stage3d.classList.remove('bump'); void stage3d.offsetWidth; stage3d.classList.add('bump');
+  };
+}
+$('#boxit').onclick = () => {
+  $('#boxit').disabled = true;
+  stage3d.classList.remove('open','bump');
+  $('#stageHouse').scrollIntoView({behavior:'smooth', block:'center'});
+  setTimeout(() => stage3d.classList.add('spin'), 1000);
+  setTimeout(enterOrder, 2500);
+};
+
+/* ---------- 4 下單 ---------- */
+function orderLines(){
+  return CONFIG.SETS[state.set].slots.map((c,i) => {
+    const it = CATS[c].items.find(x => x[0] === state.picks[i]);
+    return { cat:c, id:it[0], label: slotLabel(i).zh, color:`${it[1]} ${it[2]}` };
+  });
+}
+function enterOrder(){
+  const s = CONFIG.SETS[state.set];
+  buildHouse($('#packedHouse'), state.house, 'sway');
+  $('#receipt').innerHTML =
+    `<div class="row"><span>${HOUSES[state.house].zh}</span><span>${HOUSES[state.house].en}</span></div>` +
+    `<div class="row"><span>${s.zh}</span><span>${s.en}</span></div>` +
+    orderLines().map(l => `<div class="row"><span><img src="${img(l.cat,l.id)}" alt="">${l.label}</span><span>${l.color}</span></div>`).join('') +
+    `<div class="row total"><span>Total 合計</span><span>${money(s.price)}</span></div>`;
+  $('#formNote').textContent = `${CONFIG.SHIPPING_TEXT}・${CONFIG.DEADLINE_TEXT}。送出後會顯示付款資訊，付款完成請私訊 IG @${CONFIG.IG}。`;
+  if (closed()) showMsg('本次團購已截止，感謝支持。', true);
+  go(4);
+}
+const closed = () => Date.now() > new Date(CONFIG.DEADLINE).getTime();
+function showMsg(t, lock){ const m = $('#formMsg'); m.textContent = t; m.hidden = false; if (lock) $('#submit').disabled = true; }
+
+$('#form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, d = Object.fromEntries(new FormData(f));
+  if (closed()) return showMsg('本次團購已截止，感謝支持。', true);
+  if (!d.name.trim() || !d.address.trim() || !d.ig.trim()) return showMsg('請填寫姓名、宅配地址與 IG 帳號。');
+  if (!/^09\d{8}$/.test(d.phone.replace(/[\s-]/g,''))) return showMsg('手機號碼格式請填 09 開頭共 10 碼。');
+  if (!f.agree.checked) return showMsg('請勾選確認事項。');
+
+  const s = CONFIG.SETS[state.set], lines = orderLines();
+  const payload = {
+    time: new Date().toLocaleString('zh-TW', {timeZone:'Asia/Taipei', hour12:false}),
+    house: HOUSES[state.house].zh, set: s.zh, price: s.price,
+    item1: `${lines[0].label}：${lines[0].color}`, item2: `${lines[1].label}：${lines[1].color}`,
+    item3: `${lines[2].label}：${lines[2].color}`, item4: `${lines[3].label}：${lines[3].color}`,
+    name: d.name.trim(), phone: d.phone.replace(/[\s-]/g,''), address: d.address.trim(),
+    ig: d.ig.trim().replace(/^@?/, '@'), note: (d.note||'').trim(),
+  };
+  const btn = $('#submit'); btn.disabled = true; btn.firstChild.textContent = 'Sending… ';
+  let sent = false;
+  if (CONFIG.SHEET_URL){
+    try {
+      await fetch(CONFIG.SHEET_URL, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload)});
+      sent = true;
+    } catch(err){
+      btn.disabled = false; btn.firstChild.textContent = 'Send my order ';
+      return showMsg(`訂單沒有送出，請檢查網路後再試一次，或直接私訊 IG @${CONFIG.IG}。`);
+    }
+  }
+  $('#formCard').hidden = true; $('#doneCard').hidden = false; $('#back').hidden = true;
+  $('#orderTitle').textContent = sent ? 'Welcome home.' : 'Preview only.';
+  $('#orderLede').textContent = sent ? '訂單已送出。' : '預覽模式：尚未連接訂單表單，這筆訂單沒有送出。';
+  $('#doneText').textContent = sent
+    ? `${payload.name}，謝謝你！請於付款後私訊 IG @${CONFIG.IG}，告知姓名與匯款末五碼，才算完成訂購。應付金額 ${money(s.price)}。`
+    : `這是預覽畫面。正式上線後，客人會在這裡看到付款資訊。應付金額 ${money(s.price)}。`;
+  $('#payInfo').innerHTML = CONFIG.PAYMENT_LINES.map(l => `<div>${l}</div>`).join('');
+  $('#igLink').href = `https://www.instagram.com/${CONFIG.IG}/`;
+  $('#igLink').textContent = `私訊 @${CONFIG.IG} →`;
+  $('#doneCard').scrollIntoView({behavior:'smooth', block:'start'});
+});
+</script>
+</body>
+</html>
