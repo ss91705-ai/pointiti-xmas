@@ -22,15 +22,19 @@ const CONFIG = {
 
   // 運送說明
   SHIPPING_TEXT: '僅限宅配',
+  SHIPPING_FEE: 100,
 
-  // 付款資訊：送出訂單後顯示，請換成和磁吸板團購相同的內容
+  // 付款資訊：送出訂單後顯示
   PAYMENT_LINES: [
-    '【請替換】銀行名稱（代碼）',
-    '【請替換】帳號',
-    '【請替換】戶名',
+    '彰化銀行（009）',
+    '帳號 22005113364100',
+    '匯款備註請填：團購',
   ],
 
   IG: 'smooch_home',
+
+  // 三個團購的入口頁網址（填了才會出現「看另外兩個團購」按鈕）
+  HUB_URL: '',
 
   // 禮盒內容與價格
   SETS: {
@@ -95,7 +99,10 @@ h2{font-size:clamp(30px,6.5vw,52px)}
 .f-right,.f-left{left:17.5px;top:214px;width:385px;height:412px}
 .f-right{transform:rotateY(90deg) translateZ(210px)}
 .f-left{transform:rotateY(-90deg) translateZ(210px)}
-.in{background:var(--inner);filter:brightness(.93)}
+.f-right{filter:brightness(.86)}.f-left{filter:brightness(.8)}.f-back{filter:brightness(.78)}
+.roof.r:not(.in){filter:brightness(.95)}.roof.l:not(.in){filter:brightness(.8)}
+.in{background:linear-gradient(var(--inner),color-mix(in srgb,var(--inner) 62%,#3a2a2a));filter:brightness(.93)}
+.roof.in{background:var(--inner);box-shadow:inset 0 0 0 5px rgba(255,255,255,.4)}
 .in.f-front,.in.f-back{clip-path:polygon(0 34.2%,50% 0,100% 34.2%,100% 100%,0 100%)}
 .in.f-front{transform:translateZ(192px) rotateY(180deg);filter:brightness(.88)}
 .in.f-back{transform:rotateY(180deg) translateZ(192px) rotateY(180deg)}
@@ -107,10 +114,10 @@ h2{font-size:clamp(30px,6.5vw,52px)}
 .roof.in.r{transform:rotateY(90deg) translateZ(210px) rotateX(var(--roof)) rotateY(180deg)}
 .roof.in.l{transform:rotateY(-90deg) translateZ(210px) rotateX(var(--roof)) rotateY(180deg)}
 .handle{left:113px;top:-88px;width:193px;height:93px;backface-visibility:visible;transform:rotateY(90deg);transition:opacity .35s}
-.floor{left:0;top:433.5px;width:420px;height:385px;background:var(--inner);backface-visibility:visible;transform:rotateX(90deg);filter:brightness(.8)}
-.shadow{left:-60px;top:398px;width:540px;height:460px;backface-visibility:visible;transform:rotateX(90deg) translateZ(-3px);
-  background:radial-gradient(closest-side,rgba(40,20,30,.28),rgba(40,20,30,0) 72%)}
-.house3d.open{--rx:-34deg;--ry:-26deg;--roof:-58deg}
+.floor{left:0;top:433.5px;width:420px;height:385px;background:var(--inner);backface-visibility:visible;transform:rotateX(90deg);filter:brightness(.7);box-shadow:inset 0 0 70px rgba(0,0,0,.45)}
+/*shadow*/.shadow{left:-90px;top:378px;width:600px;height:500px;backface-visibility:visible;transform:rotateX(90deg) translateZ(-3px);
+  background:radial-gradient(closest-side,rgba(40,20,30,.42),rgba(40,20,30,0) 72%)}
+.house3d.open{--rx:-33deg;--ry:-38deg;--roof:-64deg}
 .house3d.open .handle{opacity:0}
 .house3d.sway{animation:sway 5s ease-in-out infinite}
 @keyframes sway{0%,100%{transform:rotateX(var(--rx)) rotateY(calc(var(--ry) - 7deg))}50%{transform:rotateX(var(--rx)) rotateY(calc(var(--ry) + 9deg))}}
@@ -172,6 +179,29 @@ body[data-step="1"] header{background:transparent;backdrop-filter:none}
 .tile.sel{border-color:var(--accent)}
 .tile img{height:78px;width:auto;object-fit:contain;filter:drop-shadow(0 5px 5px rgba(0,0,0,.14))}
 .tile b{font-family:var(--display);font-weight:700;font-size:14px;display:block}
+.tile i{font-style:normal;font-family:var(--mono);font-size:10px;opacity:.7}
+.tile-wrap{position:relative;display:grid}
+.info{position:absolute;right:6px;top:6px;width:26px;height:26px;border-radius:50%;background:var(--bg2);font-family:var(--display);font-weight:800;font-style:italic;font-size:14px;line-height:26px;text-align:center}
+.info:hover{background:var(--accent);color:#fff}
+.sheet-bg{position:fixed;inset:0;z-index:70;background:rgba(30,15,20,.45);display:flex;align-items:flex-end;justify-content:center;animation:fade .25s}
+.sheet-bg[hidden]{display:none}
+@keyframes fade{from{opacity:0}}
+.sheet{background:var(--card);width:100%;max-width:460px;border-radius:26px 26px 0 0;padding:20px 20px calc(22px + env(safe-area-inset-bottom));max-height:86vh;overflow:auto;animation:up .35s cubic-bezier(.2,.9,.3,1);position:relative}
+@keyframes up{from{transform:translateY(60px);opacity:0}}
+.sheet img{height:170px;width:auto;margin:4px auto 10px;filter:drop-shadow(0 10px 10px rgba(0,0,0,.16))}
+.sheet h3{font-family:var(--display);font-weight:800;font-size:26px;margin:0}
+.sheet h3 small{display:block;font-family:var(--body);font-weight:500;font-size:12px;opacity:.75;margin-top:4px}
+.sheet ul{margin:12px 0 14px;padding:0;list-style:none;font-size:13px;line-height:1.7}
+.sheet li{padding:6px 0;border-bottom:1px dashed var(--line);display:flex;gap:12px}
+.sheet li em{font-style:normal;font-family:var(--mono);font-size:10px;letter-spacing:.1em;opacity:.65;flex:none;width:44px;padding-top:3px}
+.sheet .more{display:inline-block;font-size:13px;font-weight:700;color:var(--accent)}
+.sheet .x{position:absolute;right:14px;top:14px;width:34px;height:34px;border-radius:50%;background:var(--bg2);font-size:16px}
+.fx{position:fixed;inset:0;z-index:80;pointer-events:none;width:100%;height:100%}
+.snow{position:fixed;inset:0;z-index:5;pointer-events:none;overflow:hidden;display:none}
+body[data-step="1"] .snow,body[data-step="4"] .snow{display:block}
+.snow i{position:absolute;top:-12px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(90,50,70,.28);animation:fall linear infinite;will-change:transform}
+@keyframes fall{to{transform:translate3d(var(--dx),105vh,0)}}
+.screen-lcd .l3{font-size:9px;letter-spacing:.1em;opacity:.7;margin-top:2px}
 .fly{position:fixed;z-index:60;pointer-events:none;object-fit:contain;filter:drop-shadow(0 12px 10px rgba(0,0,0,.22))}
 
 /* ---------- register ---------- */
@@ -217,11 +247,21 @@ input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
 .done h2{margin-bottom:8px}
 .pay{font-family:var(--mono);font-size:14px;line-height:2;background:var(--bg2);border-radius:16px;padding:14px 16px;margin:14px 0}
 .ig{display:inline-block;background:var(--ink);color:var(--bg);text-decoration:none;border-radius:99px;padding:12px 20px;font-weight:700;font-size:14px}
+.lottery{max-width:860px;margin:34px auto 0;padding:20px 22px;border:2px solid var(--ink);border-radius:22px;
+  background:linear-gradient(110deg,var(--card) 30%,var(--bg2));position:relative;z-index:6}
+body[data-step="1"] .lottery{background:linear-gradient(110deg,#fffdf8 30%,#f6e3ec)}
+body[data-step="3"] .lottery{display:none}
+.lottery h3{font-family:var(--body);font-weight:700;font-size:20px;margin:0 0 10px;letter-spacing:.04em}
+.lottery h3 span{color:var(--accent);margin-left:4px}
+.lottery p{margin:0;font-size:14px;line-height:1.8}
+.lottery .hub{display:inline-block;margin-top:14px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;font-size:14px;border:2px solid var(--ink);border-radius:10px;padding:9px 18px;box-shadow:4px 4px 0 var(--ink)}
+.lottery .hub[hidden]{display:none}
 footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.2em;opacity:.55;padding:26px 0 0}
 
 /* ---------- desktop ---------- */
 @media (min-width:860px){
   main{padding-bottom:60px}
+  .sheet-bg{align-items:center}.sheet{border-radius:26px}
   .house-pick .house-box{--k:.43}
   .house-pick b{font-size:30px}
   .sets{grid-template-columns:1fr 1fr;gap:22px;max-width:860px;margin-left:auto;margin-right:auto}
@@ -247,6 +287,9 @@ footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.
 </style>
 </head>
 <body data-step="1">
+
+<div class="snow" id="snow" aria-hidden="true"></div>
+<div class="sheet-bg" id="sheetBg" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 
 <header>
   <div class="brand">pointiti<small>LIVE COLOR FULLY</small></div>
@@ -308,6 +351,7 @@ footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.
         <div class="screen-lcd">
           <div class="l1"><span id="lcdSet"></span><span id="lcdCount"></span></div>
           <div class="l2"><span id="lcdPrice"></span><s id="lcdOrig"></s></div>
+          <div class="l3" id="lcdShip"></div>
         </div>
         <div class="keys"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <button class="boxit" id="boxit" disabled>BOX IT UP<small>裝盒</small></button>
@@ -337,7 +381,8 @@ footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.
           <label><span>姓名 <em>Name</em></span><input type="text" name="name" autocomplete="name" required></label>
           <label><span>手機 <em>Phone</em></span><input type="tel" name="phone" autocomplete="tel" inputmode="numeric" placeholder="09xxxxxxxx" required></label>
           <label><span>宅配地址 <em>Address</em></span><input type="text" name="address" autocomplete="street-address" required></label>
-          <label><span>IG 帳號 <em>Instagram</em></span><input type="text" name="ig" placeholder="@" autocapitalize="off" required></label>
+          <label><span>IG 帳號 <em>Instagram</em>　<span style="font-weight:400;opacity:.7">三個團購頁請填一樣的</span></span><input type="text" name="ig" placeholder="@" autocapitalize="off" required></label>
+          <label><span>匯款帳號後五碼 <em>Last 5 digits</em>　<span style="font-weight:400;opacity:.7">還沒匯款可以先空著</span></span><input type="text" name="last5" inputmode="numeric" maxlength="5"></label>
           <label><span>備註 <em>Note</em></span><textarea name="note" rows="2"></textarea></label>
           <label class="check"><input type="checkbox" name="agree" required><span>我已確認小屋與內容物顏色無誤，團購商品下單後不棄單。</span></label>
           <div class="msg" id="formMsg" hidden></div>
@@ -354,17 +399,33 @@ footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.
     </div>
   </section>
 
+  <!-- 抽獎提示（與磁吸板團購頁相同文案） -->
+  <aside class="lottery">
+    <h3>三選二，抽好禮<span>✦</span></h3>
+    <p>雙 11 三個團購頁，任選兩個下單就能參加抽獎。獎項近期公布。（資格以實際訂單的 IG 帳號＋手機為準）</p>
+    <a class="hub" id="hubBtn" hidden>看另外兩個團購</a>
+  </aside>
+
   <footer>POINTITI × SMOOCH HOME · 2026</footer>
 </main>
 
 <script>
 /* ---------- 商品資料 ---------- */
 const CATS = {
-  hook:   { en:'Hook', zh:'磁吸掛鉤', items:[['mint','Mint','薄荷'],['green','Green','綠'],['brown','Brown','棕'],['yellow','Yellow','黃'],['skyblue','Sky Blue','天藍'],['butter','Butter','奶油']] },
-  magnet: { en:'Color Drop Magnet', zh:'磁鐵', items:[['latte','Latte','拿鐵'],['mellow','Mellow','柔彩'],['original','Original','經典'],['spring','Spring','春日']] },
-  box:    { en:'Storage Box', zh:'磁吸盒', items:[['mint','Mint','薄荷'],['brown','Brown','棕'],['butter','Butter','奶油'],['skyblue','Sky Blue','天藍']] },
-  mirror: { en:'Mirror', zh:'磁吸鏡', items:[['red','Red','紅'],['butter','Butter','奶油'],['mint','Mint','薄荷']] },
+  hook:   { en:'Hook', zh:'磁吸掛鉤', items:[['mint','Mint'],['green','Green'],['brown','Brown'],['yellow','Yellow'],['skyblue','Sky Blue'],['butter','Butter'],['blue','Blue']] },
+  magnet: { en:'Color Drop Magnet', zh:'磁鐵', items:[['latte','Latte','5 pcs'],['mellow','Mellow','5 pcs'],['original','Original','5 pcs'],['spring','Spring','4 pcs']] },
+  box:    { en:'Storage Box', zh:'磁吸盒', items:[['mint','Mint','Size S'],['brown','Brown','Size S'],['butter','Butter','Size L'],['skyblue','Sky Blue','Size L']] },
+  mirror: { en:'Mirror', zh:'磁吸鏡', items:[['red','Red'],['butter','Butter'],['mint','Mint'],['brown','Brown']] },
 };
+/* 商品資訊卡內容（取自官網商品頁） */
+const COMMON = [['產地','韓國製造'],['注意','吸力依吸附面材質而異；高溫烤漆，微小漆點或氣泡屬正常現象']];
+const INFO = {
+  hook:   () => [['尺寸','W50 × D70 × H110 mm'],['材質','鋁、鋼、磁鐵'],['承重','建議吊掛 800 g 以下'],['適用','冰箱、玄關門等可吸磁鐵的表面']],
+  magnet: id => [['內容','磁鐵 ' + (id==='spring' ? '4' : '5') + ' 入'],['尺寸', id==='spring' ? '直徑 18 × 高 17 mm' : '直徑 13 × 高 12 mm'],['材質','鋁、磁鐵'],['吸力','約可固定兩張厚明信片']],
+  box:    id => [['尺寸', ['mint','brown'].includes(id) ? 'S：W88 × D40 × H95 mm' : 'L：W154 × D50 × H75 mm'],['材質','鋁、磁鐵'],['承重','限重 300 g'],['適用','冰箱、玄關門等可吸磁鐵的表面']],
+  mirror: () => [['尺寸','W200 × D50 × H220 mm'],['材質','鋁、磁鐵、壓克力鏡'],['托盤','底部可放小物，請勿放重物'],['使用','壓克力鏡面建議在 30 cm 內近距離使用']],
+};
+const productUrl = (cat,id) => 'https://smooch.tw/products/colordrop-magnet-' + (cat==='magnet' ? '' : cat + '-') + id;
 const HOUSES = { pink:{en:'Pink House',zh:'粉紅小屋'}, silver:{en:'Silver House',zh:'銀色小屋'} };
 const img = (cat,id) => `assets/${cat}-${id}.webp`;
 const $ = s => document.querySelector(s);
@@ -450,7 +511,7 @@ function renderFill(){
     const it = p && CATS[c].items.find(x => x[0] === p);
     return `<button class="slot ${i===state.active?'active':''} ${p?'filled':''}" data-i="${i}" aria-label="${L.zh}">
       <span class="n">0${i+1}</span>
-      ${p ? `<img src="${img(c,p)}" alt=""><span>${L.zh}<br><b>${it[2]}</b></span>` : `<span class="plus">+</span><span>${L.zh}</span>`}
+      ${p ? `<img src="${img(c,p)}" alt=""><span>${L.zh}<br><b>${it[1]}</b></span>` : `<span class="plus">+</span><span>${L.zh}</span>`}
     </button>`;
   }).join('');
   document.querySelectorAll('.slot').forEach(b => b.onclick = () => { state.active = +b.dataset.i; renderFill(); });
@@ -458,26 +519,30 @@ function renderFill(){
   const L = slotLabel(state.active), cat = CATS[L.cat];
   $('#trayTitle').textContent = `Pick your ${L.en.toLowerCase()}.`;
   $('#traySub').textContent = `選擇「${L.zh}」的顏色`;
-  $('#tiles').innerHTML = cat.items.map(([id,en,zh]) => `<button class="tile ${state.picks[state.active]===id?'sel':''}" data-id="${id}">
-      <img src="${img(L.cat,id)}" alt="${zh}${cat.zh}"><span><b>${en}</b>${zh}</span></button>`).join('');
+  $('#tiles').innerHTML = cat.items.map(([id,en,note]) => `<div class="tile-wrap"><button class="tile ${state.picks[state.active]===id?'sel':''}" data-id="${id}">
+      <img src="${img(L.cat,id)}" alt="${cat.zh} ${en}"><span><b>${en}</b><i>${note||'&nbsp;'}</i></span></button>
+      <button class="info" data-cat="${L.cat}" data-id="${id}" aria-label="${en} 商品資訊">i</button></div>`).join('');
   document.querySelectorAll('.tile').forEach(b => b.onclick = () => pick(b));
+  document.querySelectorAll('.info').forEach(b => b.onclick = () => openInfo(b.dataset.cat, b.dataset.id));
 
   const n = state.picks.filter(Boolean).length;
   $('#lcdSet').textContent = s.en.toUpperCase();
   $('#lcdCount').textContent = `${n} / ${s.slots.length}`;
   $('#lcdPrice').textContent = money(s.price);
   $('#lcdOrig').textContent = money(s.original);
+  $('#lcdShip').textContent = `+ SHIPPING ${money(CONFIG.SHIPPING_FEE)} 宅配運費`;
   $('#boxit').disabled = n < s.slots.length;
 }
 function pick(tile){
   const i = state.active, cat = CONFIG.SETS[state.set].slots[i], id = tile.dataset.id;
-  fly(tile.querySelector('img'), $('#stageHouse'));
   state.picks[i] = id;
+  fly(tile.querySelector('img'), $('#stageHouse'), bump);
   const next = state.picks.findIndex(p => !p);
   if (next !== -1) state.active = next;
   setTimeout(renderFill, 180);
 }
-function fly(src, target){
+function bump(){ stage3d.classList.remove('bump'); void stage3d.offsetWidth; stage3d.classList.add('bump'); }
+function fly(src, target, done){
   const a = src.getBoundingClientRect(), b = target.getBoundingClientRect();
   const el = src.cloneNode(); el.className = 'fly';
   Object.assign(el.style, {left:a.left+'px', top:a.top+'px', width:a.width+'px', height:a.height+'px'});
@@ -488,23 +553,22 @@ function fly(src, target){
     {transform:`translate(${dx*.55}px,${dy - 110}px) scale(1.15) rotate(-14deg)`, opacity:1, offset:.55},
     {transform:`translate(${dx}px,${dy}px) scale(.3) rotate(8deg)`, opacity:.2}
   ], {duration:720, easing:'cubic-bezier(.4,0,.3,1)'}).onfinish = () => {
-    el.remove();
-    stage3d.classList.remove('bump'); void stage3d.offsetWidth; stage3d.classList.add('bump');
+    el.remove(); done && done();
   };
 }
 $('#boxit').onclick = () => {
   $('#boxit').disabled = true;
   stage3d.classList.remove('open','bump');
   $('#stageHouse').scrollIntoView({behavior:'smooth', block:'center'});
-  setTimeout(() => stage3d.classList.add('spin'), 1000);
-  setTimeout(enterOrder, 2500);
+  setTimeout(() => { stage3d.classList.add('spin'); confetti(); }, 1000);
+  setTimeout(enterOrder, 2900);
 };
 
 /* ---------- 4 下單 ---------- */
 function orderLines(){
   return CONFIG.SETS[state.set].slots.map((c,i) => {
     const it = CATS[c].items.find(x => x[0] === state.picks[i]);
-    return { cat:c, id:it[0], label: slotLabel(i).zh, color:`${it[1]} ${it[2]}` };
+    return { cat:c, id:it[0], label: slotLabel(i).zh, color: it[1] + (it[2] ? ' · ' + it[2] : '') };
   });
 }
 function enterOrder(){
@@ -514,7 +578,9 @@ function enterOrder(){
     `<div class="row"><span>${HOUSES[state.house].zh}</span><span>${HOUSES[state.house].en}</span></div>` +
     `<div class="row"><span>${s.zh}</span><span>${s.en}</span></div>` +
     orderLines().map(l => `<div class="row"><span><img src="${img(l.cat,l.id)}" alt="">${l.label}</span><span>${l.color}</span></div>`).join('') +
-    `<div class="row total"><span>Total 合計</span><span>${money(s.price)}</span></div>`;
+    `<div class="row"><span>${s.en}</span><span>${money(s.price)}</span></div>` +
+    `<div class="row"><span>Shipping 宅配運費</span><span>${money(CONFIG.SHIPPING_FEE)}</span></div>` +
+    `<div class="row total"><span>Total 合計</span><span>${money(s.price + CONFIG.SHIPPING_FEE)}</span></div>`;
   $('#formNote').textContent = `${CONFIG.SHIPPING_TEXT}・${CONFIG.DEADLINE_TEXT}。送出後會顯示付款資訊，付款完成請私訊 IG @${CONFIG.IG}。`;
   if (closed()) showMsg('本次團購已截止，感謝支持。', true);
   go(4);
@@ -528,16 +594,17 @@ $('#form').addEventListener('submit', async e => {
   if (closed()) return showMsg('本次團購已截止，感謝支持。', true);
   if (!d.name.trim() || !d.address.trim() || !d.ig.trim()) return showMsg('請填寫姓名、宅配地址與 IG 帳號。');
   if (!/^09\d{8}$/.test(d.phone.replace(/[\s-]/g,''))) return showMsg('手機號碼格式請填 09 開頭共 10 碼。');
+  if (d.last5.trim() && !/^\d{5}$/.test(d.last5.trim())) return showMsg('匯款帳號後五碼請填 5 個數字，或先留空。');
   if (!f.agree.checked) return showMsg('請勾選確認事項。');
 
   const s = CONFIG.SETS[state.set], lines = orderLines();
   const payload = {
     time: new Date().toLocaleString('zh-TW', {timeZone:'Asia/Taipei', hour12:false}),
-    house: HOUSES[state.house].zh, set: s.zh, price: s.price,
+    house: HOUSES[state.house].zh, set: s.zh, price: s.price, shipping: CONFIG.SHIPPING_FEE, total: s.price + CONFIG.SHIPPING_FEE,
     item1: `${lines[0].label}：${lines[0].color}`, item2: `${lines[1].label}：${lines[1].color}`,
     item3: `${lines[2].label}：${lines[2].color}`, item4: `${lines[3].label}：${lines[3].color}`,
     name: d.name.trim(), phone: d.phone.replace(/[\s-]/g,''), address: d.address.trim(),
-    ig: d.ig.trim().replace(/^@?/, '@'), note: (d.note||'').trim(),
+    ig: d.ig.trim().replace(/^@?/, '@'), last5: d.last5.trim(), note: (d.note||'').trim(), page: 'POINTITI 禮盒',
   };
   const btn = $('#submit'); btn.disabled = true; btn.firstChild.textContent = 'Sending… ';
   let sent = false;
@@ -554,13 +621,63 @@ $('#form').addEventListener('submit', async e => {
   $('#orderTitle').textContent = sent ? 'Welcome home.' : 'Preview only.';
   $('#orderLede').textContent = sent ? '訂單已送出。' : '預覽模式：尚未連接訂單表單，這筆訂單沒有送出。';
   $('#doneText').textContent = sent
-    ? `${payload.name}，謝謝你！請於付款後私訊 IG @${CONFIG.IG}，告知姓名與匯款末五碼，才算完成訂購。應付金額 ${money(s.price)}。`
-    : `這是預覽畫面。正式上線後，客人會在這裡看到付款資訊。應付金額 ${money(s.price)}。`;
+    ? `${payload.name}，謝謝你！請於付款後私訊 IG @${CONFIG.IG}，告知姓名與匯款末五碼，才算完成訂購。應付金額 ${money(s.price + CONFIG.SHIPPING_FEE)}（含運費）。`
+    : `這是預覽畫面。正式上線後，客人會在這裡看到付款資訊。應付金額 ${money(s.price + CONFIG.SHIPPING_FEE)}（含運費）。`;
   $('#payInfo').innerHTML = CONFIG.PAYMENT_LINES.map(l => `<div>${l}</div>`).join('');
   $('#igLink').href = `https://www.instagram.com/${CONFIG.IG}/`;
   $('#igLink').textContent = `私訊 @${CONFIG.IG} →`;
   $('#doneCard').scrollIntoView({behavior:'smooth', block:'start'});
 });
+
+/* ---------- 入口頁按鈕 ---------- */
+if (CONFIG.HUB_URL){ $('#hubBtn').href = CONFIG.HUB_URL; $('#hubBtn').hidden = false; }
+
+/* ---------- 商品資訊卡 ---------- */
+function openInfo(cat, id){
+  const c = CATS[cat], it = c.items.find(x => x[0] === id);
+  $('#sheet').innerHTML = `<button class="x" aria-label="關閉">✕</button>
+    <img src="${img(cat,id)}" alt="">
+    <h3>${c.en} — ${it[1]}<small>ColorDrop ${c.zh}</small></h3>
+    <ul>${INFO[cat](id).concat(COMMON).map(([k,v]) => `<li><em>${k}</em><span>${v}</span></li>`).join('')}</ul>
+    <a class="more" href="${productUrl(cat,id)}" target="_blank" rel="noopener">See full details 官網完整介紹 ↗</a>`;
+  $('#sheetBg').hidden = false;
+  $('#sheet .x').onclick = closeInfo;
+}
+const closeInfo = () => $('#sheetBg').hidden = true;
+$('#sheetBg').onclick = e => { if (e.target.id === 'sheetBg') closeInfo(); };
+addEventListener('keydown', e => { if (e.key === 'Escape') closeInfo(); });
+
+/* ---------- 特效：聖誕紙花（只在裝盒時跑約 2.8 秒）與雪花（首頁、完成頁） ---------- */
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function confetti(){
+  if (calm) return;
+  const cv = document.createElement('canvas'); cv.className = 'fx'; document.body.appendChild(cv);
+  const dpr = Math.min(devicePixelRatio || 1, 2), W = cv.width = innerWidth*dpr, H = cv.height = innerHeight*dpr, g = cv.getContext('2d');
+  const r = $('#stageHouse').getBoundingClientRect(), ox = (r.left + r.width/2)*dpr, oy = (r.top + r.height*.4)*dpr;
+  const RED = '#C8102E', GREEN = '#1F7A4D', GOLD = '#E2B13C', ICE = state.house === 'silver' ? '#8FB4D6' : '#F29BB8';
+  // 形狀：金色星星、紅綠圓球、雪花、紅綠緞帶
+  const kinds = [['star',GOLD],['star',GOLD],['ball',RED],['ball',GREEN],['flake',ICE],['flake',ICE],['ribbon',RED],['ribbon',GREEN],['ribbon',GOLD]];
+  const P = Array.from({length:80}, () => { const a = -Math.PI/2 + (Math.random()-.5)*2.3, v = (6 + Math.random()*11)*dpr, k = kinds[Math.random()*kinds.length|0];
+    return {x:ox, y:oy, vx:Math.cos(a)*v, vy:Math.sin(a)*v, s:(5+Math.random()*6)*dpr, r:Math.random()*6, vr:(Math.random()-.5)*.3, k:k[0], c:k[1]}; });
+  const draw = {
+    star(p){ g.beginPath(); for (let i=0;i<10;i++){ const R = i%2 ? p.s*.45 : p.s, t = i*Math.PI/5; g.lineTo(Math.sin(t)*R, -Math.cos(t)*R); } g.closePath(); g.fill(); },
+    ball(p){ g.beginPath(); g.arc(0,0,p.s*.7,0,7); g.fill(); g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.arc(-p.s*.22,-p.s*.22,p.s*.2,0,7); g.fill(); },
+    flake(p){ g.lineWidth = Math.max(1.5*dpr, p.s*.18); g.lineCap = 'round'; g.beginPath(); for (let i=0;i<3;i++){ const t = i*Math.PI/3; g.moveTo(-Math.cos(t)*p.s, -Math.sin(t)*p.s); g.lineTo(Math.cos(t)*p.s, Math.sin(t)*p.s); } g.stroke(); },
+    ribbon(p){ const h = p.s*1.7*Math.cos(p.r*2); g.fillRect(-p.s*.4, -h/2, p.s*.8, h); },
+  };
+  const t0 = performance.now();
+  (function tick(t){
+    const k = (t - t0)/2800; g.clearRect(0,0,W,H);
+    if (k >= 1) return cv.remove();
+    g.globalAlpha = k > .75 ? (1-k)/.25 : 1;
+    for (const p of P){ const light = p.k === 'flake' ? .45 : 1;
+      p.vy += .3*dpr*light; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      g.save(); g.translate(p.x,p.y); g.rotate(p.r); g.fillStyle = g.strokeStyle = p.c; draw[p.k](p); g.restore(); }
+    requestAnimationFrame(tick);
+  })(t0);
+}
+if (!calm) $('#snow').innerHTML = Array.from({length:18}, (_,i) => { const d = 4 + Math.random()*6;
+  return `<i style="left:${(i*5.6 + Math.random()*4).toFixed(1)}%;width:${d.toFixed(1)}px;height:${d.toFixed(1)}px;opacity:${(.6+Math.random()*.4).toFixed(2)};--dx:${(Math.random()*60-30).toFixed(0)}px;animation-duration:${(9+Math.random()*9).toFixed(1)}s;animation-delay:-${(Math.random()*14).toFixed(1)}s"></i>`; }).join('');
 </script>
 </body>
 </html>
