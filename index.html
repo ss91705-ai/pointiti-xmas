@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>pointiti Holiday House｜雙11 聖誕小屋禮盒團購</title>
-<meta name="description" content="pointiti 聖誕小屋禮盒：選一間小屋，裝進你的顏色。雙11 團購限定。">
+<title>pointiti Holiday House｜聖誕小屋禮盒團購</title>
+<meta name="description" content="pointiti 聖誕小屋禮盒：選一間小屋，裝進你的顏色。團購 11/20 收單。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght,SOFT@9..144,400..900,100&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -14,19 +14,17 @@
    ===================================================================== */
 const CONFIG = {
   // Google Apps Script 部署後的網址（留空 = 預覽模式，訂單不會送出）
-  SHEET_URL: 'https://script.google.com/macros/s/AKfycbxxyCTuc9LkwDqUVnnfSOPcWOCA-BWVLOn4AYAdR8GxjVtW_cfG3NYBufKZUojsGWk1pA/exec',
+  SHEET_URL: 'https://script.google.com/macros/library/d/1JMdSWYWbZ8JrHSvBBwlDUbcVUwrYX4cTVrAtN-XZs_xgRbQnph6HlE-Q/2',
 
   // 截止時間（過了之後自動關閉下單）
-  DEADLINE: '2026-11-13T23:59:59+08:00',
-  DEADLINE_TEXT: '11/13（五）23:59 截止',
-
-  // 開放下單時間（之前可以試玩，但不能送出訂單）
-  OPEN: '2026-11-11T00:00:00+08:00',
-  OPEN_TEXT: '11/11（三）00:00 開放下單',
+  DEADLINE: '2026-11-20T23:59:59+08:00',
+  DEADLINE_TEXT: '11/20（五）23:59 收單',
 
   // 運送說明
   SHIPPING_TEXT: '僅限宅配',
   SHIPPING_FEE: 100,
+  // 有跟團磁吸板的客人：驗證手機後六碼後免運，可選轉帳或貨到付款
+  // （名單只放在 Apps Script 裡比對，網頁上不會出現任何電話）
 
   // 付款資訊：送出訂單後顯示
   PAYMENT_LINES: [
@@ -37,11 +35,6 @@ const CONFIG = {
 
   IG: 'smooch_home',
 
-  // 另外兩個團購頁（顯示在「三選二，抽好禮」區塊）
-  OTHER_PAGES: [
-    ['航空收納箱組合', 'https://ss91705-ai.github.io/airline-box/'],
-    ['磁吸板雙11組合', 'https://ss91705-ai.github.io/magnet-board/'],
-  ],
 
   // 禮盒內容與價格
   SETS: {
@@ -251,21 +244,29 @@ input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
 .note{font-size:12px;line-height:1.8;opacity:.85;margin:0}
 .msg{font-size:13px;line-height:1.7;padding:12px 14px;border-radius:14px;background:var(--bg2)}
 .msg[hidden]{display:none}
+.mb{border:1.5px dashed var(--line);border-radius:16px;padding:14px;margin:0;display:grid;gap:10px;background:color-mix(in srgb,var(--bg2) 35%,#fff)}
+.mb legend{font-size:12px;font-weight:700;padding:0 6px}
+.mb legend em{font-style:normal;font-family:var(--mono);font-size:10px;letter-spacing:.14em;opacity:.65;text-transform:uppercase;margin-left:4px}
+.mb p{margin:0;font-size:12px;line-height:1.7;opacity:.85}
+.mb-row{display:flex;gap:8px}
+.mb-row input{flex:1;min-width:0}
+.mb-row button{flex:none;background:var(--ink);color:var(--bg);border-radius:14px;padding:0 18px;font-weight:700;font-size:14px}
+.mb-row button:disabled{opacity:.5}
+.mb-msg{font-size:13px;line-height:1.6;padding:9px 12px;border-radius:12px;background:#fff}
+.mb-msg.ok{background:var(--accent);color:#fff;font-weight:700}
+.mb-msg[hidden],.mb-pay[hidden],label[hidden]{display:none}
+.mb-pay{display:grid;gap:8px;font-size:13px;font-weight:700}
+.mb-pay div{display:flex;gap:8px}
+.radio{flex:1;display:flex!important;align-items:center;gap:8px;font-weight:500;font-size:14px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}
+.radio:has(input:checked){border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.radio input{accent-color:var(--accent);width:18px;height:18px;margin:0}
+.receipt .free s{opacity:.55;margin-right:6px}
 .done h2{margin-bottom:8px}
+.pay[hidden]{display:none}
 .pay{font-family:var(--mono);font-size:14px;line-height:2;background:var(--bg2);border-radius:16px;padding:14px 16px;margin:14px 0}
 .ig{display:inline-block;background:var(--ink);color:var(--bg);text-decoration:none;border-radius:99px;padding:12px 20px;font-weight:700;font-size:14px}
-.lottery{max-width:860px;margin:34px auto 0;padding:20px 22px;border:2px solid var(--ink);border-radius:22px;
   background:linear-gradient(110deg,var(--card) 30%,var(--bg2));position:relative;z-index:6}
-body[data-step="1"] .lottery{background:linear-gradient(110deg,#fffdf8 30%,#f6e3ec)}
-body[data-step="3"] .lottery{display:none}
-.lottery h3{font-family:var(--body);font-weight:700;font-size:20px;margin:0 0 10px;letter-spacing:.04em}
-.lottery h3 span{color:var(--accent);margin-left:4px}
-.lottery p{margin:0;font-size:14px;line-height:1.8}
-.lottery .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
-.lottery .hub{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;font-size:14px;border:2px solid var(--ink);border-radius:10px;padding:9px 18px;box-shadow:4px 4px 0 var(--ink)}
-.lottery .hub[hidden]{display:none}
-.meta .soon{background:var(--ink);color:#fff;border-color:var(--ink)}
-footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.2em;opacity:.55;padding:26px 0 0}
+body[data-step="1"] body[data-step="3"] footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.2em;opacity:.55;padding:26px 0 0}
 
 /* ---------- desktop ---------- */
 @media (min-width:860px){
@@ -311,7 +312,7 @@ footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.
   <!-- 1 選小屋 -->
   <section class="screen active" data-screen="1">
     <div class="head">
-      <div class="eyebrow">pointiti Holiday House · 11.11</div>
+      <div class="eyebrow">pointiti Holiday House · ~11.20</div>
       <h1>Pick your<br>little house.</h1>
       <p class="lede zh">選一間聖誕小屋，把喜歡的顏色裝進去。</p>
     </div>
@@ -325,7 +326,7 @@ footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.
         <b>Silver House</b><span class="zh">銀色小屋</span><em class="zh">選這間 →</em>
       </button>
     </div>
-    <div class="meta zh"><span id="metaOpen" class="soon" hidden></span><span id="metaDeadline"></span><span id="metaShip"></span></div>
+    <div class="meta zh"><span id="metaDeadline"></span><span id="metaShip"></span></div>
   </section>
 
   <!-- 2 選禮盒 -->
@@ -390,8 +391,18 @@ footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.
           <label><span>姓名 <em>Name</em></span><input type="text" name="name" autocomplete="name" required></label>
           <label><span>手機 <em>Phone</em></span><input type="tel" name="phone" autocomplete="tel" inputmode="numeric" placeholder="09xxxxxxxx" required></label>
           <label><span>宅配地址 <em>Address</em></span><input type="text" name="address" autocomplete="street-address" required></label>
-          <label><span>IG 帳號 <em>Instagram</em>　<span style="font-weight:400;opacity:.7">三個團購頁請填一樣的</span></span><input type="text" name="ig" placeholder="@" autocapitalize="off" required></label>
-          <label><span>匯款帳號後五碼 <em>Last 5 digits</em>　<span style="font-weight:400;opacity:.7">還沒匯款可以先空著</span></span><input type="text" name="last5" inputmode="numeric" maxlength="5"></label>
+          <label><span>IG 帳號 <em>Instagram</em></span><input type="text" name="ig" placeholder="@" autocapitalize="off" required></label>
+          <fieldset class="mb">
+            <legend>有跟團磁吸板嗎？<em>Magnet board</em></legend>
+            <p>有參加這次磁吸板團購的話，輸入當時下單的手機後六碼，驗證通過本單免運，並可選擇貨到付款。沒有跟團請略過。</p>
+            <div class="mb-row"><input type="text" id="mb6" inputmode="numeric" maxlength="6" placeholder="手機後六碼" autocomplete="off"><button type="button" id="mbBtn">驗證</button></div>
+            <div class="mb-msg" id="mbMsg" hidden></div>
+            <div class="mb-pay" id="mbPay" hidden>
+              <span>付款方式</span>
+              <div><label class="radio"><input type="radio" name="payment" value="轉帳" checked>轉帳</label><label class="radio"><input type="radio" name="payment" value="貨到付款">貨到付款</label></div>
+            </div>
+          </fieldset>
+          <label id="last5Field"><span>匯款帳號後五碼 <em>Last 5 digits</em>　<span style="font-weight:400;opacity:.7">還沒匯款可以先空著</span></span><input type="text" name="last5" inputmode="numeric" maxlength="5"></label>
           <label><span>備註 <em>Note</em></span><textarea name="note" rows="2"></textarea></label>
           <label class="check"><input type="checkbox" name="agree" required><span>我已確認小屋與內容物顏色無誤，團購商品下單後不棄單。</span></label>
           <div class="msg" id="formMsg" hidden></div>
@@ -407,13 +418,6 @@ footer{text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.
       </div>
     </div>
   </section>
-
-  <!-- 抽獎提示（與磁吸板團購頁相同文案） -->
-  <aside class="lottery">
-    <h3>三選二，抽好禮<span>✦</span></h3>
-    <p>雙 11 三個團購頁，任選兩個下單就能參加抽獎。獎項近期公布。（資格以實際訂單的 IG 帳號＋手機為準）</p>
-    <div class="links" id="otherPages"></div>
-  </aside>
 
   <footer>POINTITI × SMOOCH HOME · 2026</footer>
 </main>
@@ -436,6 +440,7 @@ const INFO = {
 };
 const productUrl = (cat,id) => 'https://smooch.tw/products/colordrop-magnet-' + (cat==='magnet' ? '' : cat + '-') + id;
 const HOUSES = { pink:{en:'Pink House',zh:'粉紅小屋'}, silver:{en:'Silver House',zh:'銀色小屋'} };
+const boxLabel = () => HOUSES[state.house].zh + '（包裝盒）';
 const img = (cat,id) => `assets/${cat}-${id}.webp`;
 const $ = s => document.querySelector(s);
 const money = n => 'NT$' + n.toLocaleString('en-US');
@@ -471,7 +476,6 @@ $('#back').onclick = () => go(state.step - 1);
 
 /* ---------- 1 選小屋 ---------- */
 $('#metaDeadline').textContent = CONFIG.DEADLINE_TEXT;
-if (notOpen()){ $('#metaOpen').textContent = CONFIG.OPEN_TEXT + '・現在可以先試玩'; $('#metaOpen').hidden = false; }
 $('#metaShip').textContent = CONFIG.SHIPPING_TEXT;
 document.querySelectorAll('.house-pick').forEach(b => b.onclick = () => {
   state.house = b.dataset.house;
@@ -488,7 +492,7 @@ function renderSets(){
     const thumbs = s.slots.map(c => { const i = used[c] = (used[c]||0); used[c]++; return `<img src="${img(c, sample[c][i] || sample[c][0])}" alt="">`; }).join('');
     const list = Object.entries(counts).map(([c,n]) => `<li><span>${CATS[c].zh} <span style="opacity:.6;font-size:11px">${CATS[c].en}</span></span><span>×${n}</span></li>`).join('');
     return `<button class="set" data-set="${key}">
-      <span class="tag">11.11</span>
+      <span class="tag">~11.20</span>
       <h3>${s.en}<small>${s.zh}</small></h3>
       <div class="thumbs">${thumbs}</div>
       <ul>${list}</ul>
@@ -581,50 +585,80 @@ function orderLines(){
     return { cat:c, id:it[0], label: slotLabel(i).zh, color: it[1] + (it[2] ? ' · ' + it[2] : '') };
   });
 }
-function enterOrder(){
+const fee = () => state.magnet ? 0 : CONFIG.SHIPPING_FEE;
+const payment = () => state.magnet ? (document.querySelector('[name=payment]:checked') || {}).value || '轉帳' : '轉帳';
+function renderReceipt(){
   const s = CONFIG.SETS[state.set];
-  buildHouse($('#packedHouse'), state.house, 'sway');
   $('#receipt').innerHTML =
-    `<div class="row"><span>${HOUSES[state.house].zh}</span><span>${HOUSES[state.house].en}</span></div>` +
+    `<div class="row"><span>${boxLabel()}</span><span>${HOUSES[state.house].en} · Gift Box</span></div>` +
     `<div class="row"><span>${s.zh}</span><span>${s.en}</span></div>` +
     orderLines().map(l => `<div class="row"><span><img src="${img(l.cat,l.id)}" alt="">${l.label}</span><span>${l.color}</span></div>`).join('') +
     `<div class="row"><span>${s.en}</span><span>${money(s.price)}</span></div>` +
-    `<div class="row"><span>Shipping 宅配運費</span><span>${money(CONFIG.SHIPPING_FEE)}</span></div>` +
-    `<div class="row total"><span>Total 合計</span><span>${money(s.price + CONFIG.SHIPPING_FEE)}</span></div>`;
+    (state.magnet
+      ? `<div class="row free"><span>Shipping 宅配運費・磁吸板團友免運</span><span><s>${money(CONFIG.SHIPPING_FEE)}</s>${money(0)}</span></div>`
+      : `<div class="row"><span>Shipping 宅配運費</span><span>${money(CONFIG.SHIPPING_FEE)}</span></div>`) +
+    `<div class="row total"><span>Total 合計</span><span>${money(s.price + fee())}</span></div>`;
+}
+function enterOrder(){
+  const s = CONFIG.SETS[state.set];
+  buildHouse($('#packedHouse'), state.house, 'sway');
+  renderReceipt();
   $('#formNote').textContent = `${CONFIG.SHIPPING_TEXT}・${CONFIG.DEADLINE_TEXT}。送出後會顯示付款資訊，付款完成請私訊 IG @${CONFIG.IG}。`;
   if (closed()) showMsg('本次團購已截止，感謝支持。', true);
-  else if (notOpen()) lockUntilOpen();
   go(4);
 }
 const closed = () => Date.now() > new Date(CONFIG.DEADLINE).getTime();
-function notOpen(){ return Date.now() < new Date(CONFIG.OPEN).getTime(); }
-let openTimer;
-function lockUntilOpen(){
-  showMsg(`現在是試玩時間，${CONFIG.OPEN_TEXT}。可以先把小屋和顏色挑好，到時候再回來送出。`);
-  const btn = $('#submit'); btn.disabled = true; btn.firstChild.textContent = 'Opens 11.11 ';
-  clearInterval(openTimer);
-  openTimer = setInterval(() => { if (!notOpen()){ clearInterval(openTimer); btn.disabled = false; btn.firstChild.textContent = 'Send my order '; $('#formMsg').hidden = true; $('#metaOpen').hidden = true; } }, 15000);
-}
+/* ---------- 磁吸板團友驗證（比對在 Apps Script 端進行） ---------- */
+function mbMsg(t, ok){ const m = $('#mbMsg'); m.textContent = t; m.hidden = false; m.classList.toggle('ok', !!ok); }
+function syncPayment(){ $('#last5Field').hidden = payment() === '貨到付款'; }
+document.querySelectorAll('[name=payment]').forEach(r => r.onchange = syncPayment);
+$('#mb6').addEventListener('input', e => {
+  e.target.value = e.target.value.replace(/\D/g,'').slice(0,6);
+  if (state.magnet && e.target.value !== state.magnet){ state.magnet = null; $('#mbPay').hidden = true; $('#mbMsg').hidden = true; syncPayment(); renderReceipt(); }
+});
+$('#mb6').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); $('#mbBtn').click(); } });
+$('#mbBtn').onclick = async () => {
+  const v = $('#mb6').value;
+  if (!/^\d{6}$/.test(v)) return mbMsg('請輸入 6 個數字。');
+  if (!CONFIG.SHEET_URL) return mbMsg('預覽模式無法驗證，正式上線後才會比對名單。');
+  const btn = $('#mbBtn'); btn.disabled = true; btn.textContent = '驗證中…';
+  try {
+    const r = await (await fetch(`${CONFIG.SHEET_URL}?action=verify&p6=${v}`)).json();
+    if (r.limited) mbMsg(`驗證次數太多，請稍後再試，或私訊 IG @${CONFIG.IG}。`);
+    else if (r.match){
+      state.magnet = v; $('#mbPay').hidden = false;
+      mbMsg('已確認磁吸板團購資格 ✓ 本單免運，請選擇付款方式。', true);
+    } else {
+      state.magnet = null; $('#mbPay').hidden = true;
+      mbMsg('查不到這組號碼，請確認是磁吸板訂單上填的手機。');
+    }
+  } catch(err){
+    mbMsg(`驗證暫時無法使用，請稍後再試，或私訊 IG @${CONFIG.IG}。`);
+  }
+  btn.disabled = false; btn.textContent = '驗證';
+  syncPayment(); renderReceipt();
+};
+
 function showMsg(t, lock){ const m = $('#formMsg'); m.textContent = t; m.hidden = false; if (lock) $('#submit').disabled = true; }
 
 $('#form').addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.target, d = Object.fromEntries(new FormData(f));
   if (closed()) return showMsg('本次團購已截止，感謝支持。', true);
-  if (notOpen()) return lockUntilOpen();
   if (!d.name.trim() || !d.address.trim() || !d.ig.trim()) return showMsg('請填寫姓名、宅配地址與 IG 帳號。');
   if (!/^09\d{8}$/.test(d.phone.replace(/[\s-]/g,''))) return showMsg('手機號碼格式請填 09 開頭共 10 碼。');
-  if (d.last5.trim() && !/^\d{5}$/.test(d.last5.trim())) return showMsg('匯款帳號後五碼請填 5 個數字，或先留空。');
+  if (payment() === '轉帳' && d.last5.trim() && !/^\d{5}$/.test(d.last5.trim())) return showMsg('匯款帳號後五碼請填 5 個數字，或先留空。');
   if (!f.agree.checked) return showMsg('請勾選確認事項。');
 
   const s = CONFIG.SETS[state.set], lines = orderLines();
   const payload = {
     time: new Date().toLocaleString('zh-TW', {timeZone:'Asia/Taipei', hour12:false}),
-    house: HOUSES[state.house].zh, set: s.zh, price: s.price, shipping: CONFIG.SHIPPING_FEE, total: s.price + CONFIG.SHIPPING_FEE,
+    house: boxLabel(), set: s.zh, price: s.price, shipping: fee(), total: s.price + fee(),
+    payment: payment(), magnet6: state.magnet || '',
     item1: `${lines[0].label}：${lines[0].color}`, item2: `${lines[1].label}：${lines[1].color}`,
     item3: `${lines[2].label}：${lines[2].color}`, item4: `${lines[3].label}：${lines[3].color}`,
     name: d.name.trim(), phone: d.phone.replace(/[\s-]/g,''), address: d.address.trim(),
-    ig: d.ig.trim().replace(/^@?/, '@'), last5: d.last5.trim(), note: (d.note||'').trim(), page: 'POINTITI 禮盒',
+    ig: d.ig.trim().replace(/^@?/, '@'), last5: payment() === '轉帳' ? d.last5.trim() : '', note: (d.note||'').trim(), page: 'POINTITI 禮盒',
   };
   const btn = $('#submit'); btn.disabled = true; btn.firstChild.textContent = 'Sending… ';
   let sent = false;
@@ -640,17 +674,20 @@ $('#form').addEventListener('submit', async e => {
   $('#formCard').hidden = true; $('#doneCard').hidden = false; $('#back').hidden = true;
   $('#orderTitle').textContent = sent ? 'Welcome home.' : 'Preview only.';
   $('#orderLede').textContent = sent ? '訂單已送出。' : '預覽模式：尚未連接訂單表單，這筆訂單沒有送出。';
-  $('#doneText').textContent = sent
-    ? `${payload.name}，謝謝你！請於付款後私訊 IG @${CONFIG.IG}，告知姓名與匯款末五碼，才算完成訂購。應付金額 ${money(s.price + CONFIG.SHIPPING_FEE)}（含運費）。`
-    : `這是預覽畫面。正式上線後，客人會在這裡看到付款資訊。應付金額 ${money(s.price + CONFIG.SHIPPING_FEE)}（含運費）。`;
+  const due = money(payload.total) + (state.magnet ? '（磁吸板團友免運）' : '（含運費）');
+  const cod = payload.payment === '貨到付款';
+  $('#doneText').textContent = !sent
+    ? `這是預覽畫面。正式上線後，客人會在這裡看到付款資訊。應付金額 ${due}。`
+    : cod
+      ? `${payload.name}，謝謝你！你選擇貨到付款，商品送達時付給宅配人員即可，不用先匯款。應付金額 ${due}。`
+      : `${payload.name}，謝謝你！請於付款後私訊 IG @${CONFIG.IG}，告知姓名與匯款末五碼，才算完成訂購。應付金額 ${due}。`;
+  $('#payInfo').hidden = cod;
   $('#payInfo').innerHTML = CONFIG.PAYMENT_LINES.map(l => `<div>${l}</div>`).join('');
   $('#igLink').href = `https://www.instagram.com/${CONFIG.IG}/`;
-  $('#igLink').textContent = `私訊 @${CONFIG.IG} →`;
+  $('#igLink').textContent = cod ? `有問題私訊 @${CONFIG.IG} →` : `私訊 @${CONFIG.IG} →`;
   $('#doneCard').scrollIntoView({behavior:'smooth', block:'start'});
 });
 
-/* ---------- 入口頁按鈕 ---------- */
-$('#otherPages').innerHTML = CONFIG.OTHER_PAGES.map(([name,url]) => `<a class="hub" href="${url}" target="_blank" rel="noopener">${name} ↗</a>`).join('');
 
 /* ---------- 商品資訊卡 ---------- */
 function openInfo(cat, id){
