@@ -30,7 +30,7 @@ const CONFIG = {
   PAYMENT_LINES: [
     '彰化銀行（009）',
     '帳號 22005113364100',
-    '匯款備註請填：聖誕禮盒',
+    '匯款備註請填：團購',
   ],
 
   IG: 'smooch_home',
@@ -426,7 +426,7 @@ body[data-step="1"] body[data-step="3"] footer{text-align:center;font-family:var
 /* ---------- 商品資料 ---------- */
 const CATS = {
   hook:   { en:'Hook', zh:'磁吸掛鉤', items:[['mint','Mint'],['green','Green'],['brown','Brown'],['yellow','Yellow'],['skyblue','Sky Blue'],['butter','Butter'],['blue','Blue']] },
-  magnet: { en:'Color Drop Magnet', zh:'磁鐵', items:[['latte','Latte','5 pcs'],['mellow','Mellow','5 pcs'],['original','Original','5 pcs'],['spring','Spring','4 pcs']] },
+  magnet: { en:'Color Drop Magnet', zh:'磁鐵', items:[['latte','Latte','5 pcs'],['mellow','Mellow','5 pcs'],['original','Original','5 pcs'],['spring','Spring','4 pcs'],['christmas','Christmas','5 pcs · Limited']] },
   box:    { en:'Storage Box', zh:'磁吸盒', items:[['mint','Mint','Size S'],['brown','Brown','Size S'],['butter','Butter','Size L'],['skyblue','Sky Blue','Size L']] },
   mirror: { en:'Mirror', zh:'磁吸鏡', items:[['red','Red'],['butter','Butter'],['mint','Mint'],['brown','Brown']] },
 };
@@ -434,7 +434,13 @@ const CATS = {
 const COMMON = [['產地','韓國製造'],['注意','吸力依吸附面材質而異；高溫烤漆，微小漆點或氣泡屬正常現象']];
 const INFO = {
   hook:   () => [['尺寸','W50 × D70 × H110 mm'],['材質','鋁、鋼、磁鐵'],['承重','建議吊掛 800 g 以下'],['適用','冰箱、玄關門等可吸磁鐵的表面']],
-  magnet: id => [['內容','磁鐵 ' + (id==='spring' ? '4' : '5') + ' 入'],['尺寸', id==='spring' ? '直徑 18 × 高 17 mm' : '直徑 13 × 高 12 mm'],['材質','鋁、磁鐵'],['吸力','約可固定兩張厚明信片']],
+  magnet: id => id === 'christmas' ? [
+    ['內容','磁鐵 5 入：Lemon White、Cranberry、Sage、Pearl Gold、Deep Pine'],
+    ['特色','聖誕節限定的 Color Drop 特別配色。深綠、鮮紅加上微微發亮的金色，為空間增添亮點'],
+    ['材質','金屬，高溫烤漆處理，堅固、耐熱、抗污'],
+    ['適用','玄關門、鐵製家具等；搭配 Color Drop 留言板系列更好用'],
+    ['圖片','包裝為示意圖，實際以收到的商品為準'],
+  ] : [['內容','磁鐵 ' + (id==='spring' ? '4' : '5') + ' 入'],['尺寸', id==='spring' ? '直徑 18 × 高 17 mm' : '直徑 13 × 高 12 mm'],['材質','鋁、磁鐵'],['吸力','約可固定兩張厚明信片']],
   box:    id => [['尺寸', ['mint','brown'].includes(id) ? 'S：W88 × D40 × H95 mm' : 'L：W154 × D50 × H75 mm'],['材質','鋁、磁鐵'],['承重','限重 300 g'],['適用','冰箱、玄關門等可吸磁鐵的表面']],
   mirror: () => [['尺寸','W200 × D50 × H220 mm'],['材質','鋁、磁鐵、壓克力鏡'],['托盤','底部可放小物，請勿放重物'],['使用','壓克力鏡面建議在 30 cm 內近距離使用']],
 };
@@ -690,13 +696,15 @@ $('#form').addEventListener('submit', async e => {
 
 
 /* ---------- 商品資訊卡 ---------- */
+const NEW_ITEMS = ['magnet:christmas'];   // 官網還沒上架的商品：資訊卡不放官網連結
 function openInfo(cat, id){
+  const isNew = NEW_ITEMS.includes(cat + ':' + id);
   const c = CATS[cat], it = c.items.find(x => x[0] === id);
   $('#sheet').innerHTML = `<button class="x" aria-label="關閉">✕</button>
     <img src="${img(cat,id)}" alt="">
     <h3>${c.en} — ${it[1]}<small>ColorDrop ${c.zh}</small></h3>
-    <ul>${INFO[cat](id).concat(COMMON).map(([k,v]) => `<li><em>${k}</em><span>${v}</span></li>`).join('')}</ul>
-    <a class="more" href="${productUrl(cat,id)}" target="_blank" rel="noopener">See full details 官網完整介紹 ↗</a>`;
+    <ul>${INFO[cat](id).concat(COMMON.filter(([k]) => !(isNew && k === '產地'))).map(([k,v]) => `<li><em>${k}</em><span>${v}</span></li>`).join('')}</ul>
+    ${isNew ? `<span class="more" style="opacity:.7">聖誕限定款，官網即將上架</span>` : `<a class="more" href="${productUrl(cat,id)}" target="_blank" rel="noopener">See full details 官網完整介紹 ↗</a>`}`;
   $('#sheetBg').hidden = false;
   $('#sheet .x').onclick = closeInfo;
 }
